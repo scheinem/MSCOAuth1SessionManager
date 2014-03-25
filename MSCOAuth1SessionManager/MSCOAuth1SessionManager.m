@@ -114,10 +114,14 @@ NSString *const MSCOAuth1VersionKey             = @"oauth_version";
 }
 
 - (void)fetchAccessTokenUsingResource:(NSString *)resource withCompletionBlock:(mscOAuth1SessionManager_fetchTokenCompletionBlock)completionBlock {
+    NSMutableDictionary *queryParameters = [NSMutableDictionary dictionaryWithDictionary:@{MSCOAuth1TokenKey : self.requestToken}];
     
-    NSDictionary *queryParameters = @{MSCOAuth1TokenKey : self.requestToken,
-                                      MSCOAuth1VerifierKey : self.verifier};
+    if (self.verifier.length > 0) {
+        [queryParameters setObject:self.verifier forKey:MSCOAuth1VerifierKey];
+    }
+    
     NSString *url = [self signedURLWithQueryParameters:queryParameters httpMethod:@"POST" signatureMethod:self.signatureMethod resource:resource];
+    
     [super POST:url parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
         NSString *responseString = [[NSString alloc] initWithData:responseObject encoding:NSASCIIStringEncoding];
         NSMutableDictionary *responseParameters = [self parametersDictionaryWithQueryString:responseString];
@@ -148,12 +152,12 @@ NSString *const MSCOAuth1VersionKey             = @"oauth_version";
 
 - (NSURLSessionDataTask *)DELETE:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *, id))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
     [self setAuthorizationHeaderForQueryParameters:nil httpMethod:@"DELETE" signatureMethod:self.signatureMethod resource:URLString];
-    return [super DELETE:URLString parameters:parameters success:success failure:failure];
+    return [super DELETE:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (NSURLSessionDataTask *)HEAD:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
     [self setAuthorizationHeaderForQueryParameters:nil httpMethod:@"HEAD" signatureMethod:self.signatureMethod resource:URLString];
-    return [super HEAD:URLString parameters:parameters success:success failure:failure];
+    return [super HEAD:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (NSURLSessionDataTask *)GET:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *, id))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
@@ -168,22 +172,22 @@ NSString *const MSCOAuth1VersionKey             = @"oauth_version";
     }
     
     [self setAuthorizationHeaderForQueryParameters:queryParameters httpMethod:@"GET" signatureMethod:self.signatureMethod resource:urlWithoutQuery];
-    return [super GET:URLString parameters:parameters success:success failure:failure];
+    return [super GET:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (NSURLSessionDataTask *)PATCH:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *, id))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
     [self setAuthorizationHeaderForQueryParameters:nil httpMethod:@"PATCH" signatureMethod:self.signatureMethod resource:URLString];
-    return [super PATCH:URLString parameters:parameters success:success failure:failure];
+    return [super PATCH:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (NSURLSessionDataTask *)POST:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *, id))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
     [self setAuthorizationHeaderForQueryParameters:nil httpMethod:@"POST" signatureMethod:self.signatureMethod resource:URLString];
-    return [super POST:URLString parameters:parameters success:success failure:failure];
+    return [super POST:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (NSURLSessionDataTask *)PUT:(NSString *)URLString parameters:(NSDictionary *)parameters success:(void (^)(NSURLSessionDataTask *, id))success failure:(void (^)(NSURLSessionDataTask *, NSError *))failure {
     [self setAuthorizationHeaderForQueryParameters:nil httpMethod:@"PUT" signatureMethod:self.signatureMethod resource:URLString];
-    return [super PUT:URLString parameters:parameters success:success failure:failure];
+    return [super PUT:[self urlForResource:URLString] parameters:parameters success:success failure:failure];
 }
 
 - (void)setResponseSerializer:(AFHTTPResponseSerializer<AFURLResponseSerialization> *)responseSerializer {
@@ -223,6 +227,9 @@ NSString *const MSCOAuth1VersionKey             = @"oauth_version";
 }
 
 - (NSString *)urlForResource:(NSString *)resource {
+    if ([[NSURL URLWithString:resource] host].length > 0) {
+        return resource;
+    }
     NSString *url = nil;
     if ([resource hasPrefix:@"/"]) {
         resource = [resource substringFromIndex:1];
