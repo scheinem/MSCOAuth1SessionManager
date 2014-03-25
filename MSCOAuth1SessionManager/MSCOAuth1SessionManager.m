@@ -96,21 +96,15 @@ NSString *const MSCOAuth1VersionKey             = @"oauth_version";
     return nil;
 }
 
-- (BOOL)handleOpenURL:(NSURL *)url {
-    if ([url.scheme isEqualToString:self.callbackURL.scheme] &&
-        [url.host isEqualToString:self.callbackURL.host] &&
-        [url.path isEqualToString:self.callbackURL.path]) {
-        
-        NSDictionary *parameters = [self parametersDictionaryWithQueryString:url.query];
-        if ([[parameters objectForKey:@"oauth_token"] isEqualToString:self.requestToken]) {
-            self.verifier = [parameters objectForKey:@"oauth_verifier"];
-            if (self.verifier.length > 0) {
-                return YES;
-            }
-        }
-        return NO;
+- (BOOL)canHandleURL:(NSURL *)url {
+    return [url.scheme isEqualToString:self.callbackURL.scheme] && [url.host isEqualToString:self.callbackURL.host] && [url.path isEqualToString:self.callbackURL.path];
+}
+
+- (void)handleOpenURL:(NSURL *)url {
+    NSDictionary *parameters = [self parametersDictionaryWithQueryString:url.query];
+    if ([[parameters objectForKey:@"oauth_token"] isEqualToString:self.requestToken]) {
+        self.verifier = [parameters objectForKey:@"oauth_verifier"];
     }
-    return NO;
 }
 
 - (void)fetchAccessTokenUsingResource:(NSString *)resource withCompletionBlock:(mscOAuth1SessionManager_fetchTokenCompletionBlock)completionBlock {

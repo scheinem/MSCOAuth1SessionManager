@@ -24,7 +24,8 @@ typedef void (^mscOAuth1SessionManager_fetchTokenCompletionBlock)(NSDictionary *
 
 - (NSURLRequest *)authorizationRequestUsingResource:(NSString *)resource;
 
-- (BOOL)handleOpenURL:(NSURL *)url;
+- (BOOL)canHandleURL:(NSURL *)url;
+- (void)handleOpenURL:(NSURL *)url;
 
 - (void)fetchAccessTokenUsingResource:(NSString *)resource withCompletionBlock:(mscOAuth1SessionManager_fetchTokenCompletionBlock)completionBlock;
 
